@@ -1,15 +1,16 @@
-# Advanced Metrics
-# Advanced Metrics to support advanced analysis of Deep Learning Models 
-
 # Bilingual Evaluation Under Study (BLEU) score
 # ref: https://github.com/tensorflow/nmt/blob/master/nmt/scripts/bleu.py#L56
+# Example: bleu_score([["apple is apple"]], ["apple is appl"])
+ 
+using DataStructures: OrderedDict
+
 function get_ngrams(segment, max_order)
-    ngrams_count = Dict()
+    ngrams_count = OrderedDict()
     for order in 1:max_order
         for i in 1: (length(segment) - order+1)
-            ngram = segment[i:i+order-1]
+            ngram = tuple(segment[i:i+order-1]...)
             if (ngram) in keys(ngrams_count)
-                ngrams_count[ngram] +=1
+                ngrams_count[ngram] += 1
             else 
                 ngrams_count[ngram] = 1
             end
@@ -18,7 +19,7 @@ function get_ngrams(segment, max_order)
     return ngrams_count
 end
 
-function BLEU_score(reference_corpus, translation_corpus; max_order=4, smooth=false)
+function bleu_score(reference_corpus, translation_corpus; max_order=4, smooth=false)
     matches_by_order = zeros(max_order)
     possible_matches_by_order = zeros(max_order)
     reference_length = 0
@@ -26,7 +27,7 @@ function BLEU_score(reference_corpus, translation_corpus; max_order=4, smooth=fa
     for (references, translation) in zip(reference_corpus, translation_corpus)
         reference_length += min([length(r) for r in references]...)
         translation_length += length(translation)
-        merged_ref_ngram_counts = Dict()
+        merged_ref_ngram_counts = OrderedDict()
         for reference in references
           ref_ngrams = get_ngrams(reference, max_order)
           keys_union = union(keys(merged_ref_ngram_counts), keys(ref_ngrams)) 
@@ -42,8 +43,14 @@ function BLEU_score(reference_corpus, translation_corpus; max_order=4, smooth=fa
               end
            end
         end
+        # print(length(merged_ref_ngram_counts),"\n")
         translation_ngram_counts = get_ngrams(translation, max_order)
-        overlap = intersect(translation_ngram_counts, merged_ref_ngram_counts)
+        overlap = OrderedDict()
+        keys_union = intersect(keys(merged_ref_ngram_counts), keys(translation_ngram_counts))
+        for key in keys_union
+                 overlap[key] = min(translation_ngram_counts[key],  merged_ref_ngram_counts[key])
+        end
+        print(length(overlap),"\n")
         for key in overlap
             matches_by_order[length(key[1])] += key[2]
         end
@@ -54,6 +61,8 @@ function BLEU_score(reference_corpus, translation_corpus; max_order=4, smooth=fa
             end
         end
     end
+    print(matches_by_order,"\n")
+    print(possible_matches_by_order,"\n")
     precisions = zeros(max_order)
     for i in 1:max_order
         if smooth
@@ -64,6 +73,7 @@ function BLEU_score(reference_corpus, translation_corpus; max_order=4, smooth=fa
             end
         end
     end
+
     geo_mean = 0.0
     if min(precisions...) > 0
        p_log_sum = sum(log.(precisions)) / max_order
@@ -79,19 +89,3 @@ function BLEU_score(reference_corpus, translation_corpus; max_order=4, smooth=fa
     bleu = geo_mean * bp
     return bleu, precisions, bp, ratio, translation_length, reference_length
 end
-
-# TODO
-# Inception Score
-
-
-
-
-# Frechet Inception Distance
-
-
-
-# IoU
-
-
-
-# PSNR

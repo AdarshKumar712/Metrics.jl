@@ -183,6 +183,22 @@ function Specificity()
     end
 end
 
+# False Alarm Rate
+function False_alarm_rate(y_pred, y_true; avg_type="macro", sample_weights=nothing)
+    return 1 - Specificity(y_pred, y_true, avg_type, sample_weights)
+end
+
+# Cohen's Kappa
+function Cohen_Kappa(y_pred, y_true)
+    TP, TN, FP, FN = TFPN(y_pred, y_true)
+    mrg_a = ((tp .+ fn) .* (tp .+ fp)) ./ (tp .+ fn .+ fp .+ tn)
+    mrg_b = ((fp .+ tn) .* (fn .+ tn)) ./ (tp .+ fn .+ fp .+ tn)
+    expec_agree = (mrg_a .+ mrg_b) ./ (tp .+ fn .+ fp .+ tn)
+    obs_agree = (tp .+ tn) ./ (tp .+ fn .+ fp .+ tn)
+    cohens_kappa = mean((obs_agree .- expec_agree) ./ (1 .- expec_agree))
+    return cohens_kappa
+end
+
 # StatsfromTFPN
 function StatsfromTFPN(TP, TN, FP, FN)
     Confusion_Matrix = reshape([TP, FP, FN, TN], 2, 2)
@@ -208,20 +224,35 @@ function Classwise_Stats(y_pred, y_true)
     return ClasswiseStats
 end
 
-# False Alarm Rate
-function False_alarm_rate(y_pred, y_true; avg_type="macro", sample_weights=nothing)
-    return 1 - Specificity(y_pred, y_true, avg_type, sample_weights)
-end
-
-# Cohen's Kappa
-function Cohen_Kappa(y_pred, y_true)
-    TP, TN, FP, FN = TFPN(y_pred, y_true)
-    mrg_a = ((tp .+ fn) .* (tp .+ fp)) ./ (tp .+ fn .+ fp .+ tn)
-    mrg_b = ((fp .+ tn) .* (fn .+ tn)) ./ (tp .+ fn .+ fp .+ tn)
-    expec_agree = (mrg_a .+ mrg_b) ./ (tp .+ fn .+ fp .+ tn)
-    obs_agree = (tp .+ tn) ./ (tp .+ fn .+ fp .+ tn)
-    cohens_kappa = mean((obs_agree .- expec_agree) ./ (1 .- expec_agree))
-    return cohens_kappa
+# Global Stats
+# TODO: add weighted stats option as above functions
+function Global_Stats(y_pred, y_true; avg_type="macro")
+    TP, TN, FP, FN = TFPN(y_pred, y_true) 
+    if avg_type == "macro"
+        confusion_matrix = Confusion_matrix(y_pred, y_true)
+        precision = mean(TP ./ (TP .+ FP))
+        recall = mean(TP ./ (TP .+ FN))
+        f1_score = 2 * precision * recall / (precision + recall)
+        specificity = mean(TN ./ (TN .+ FP))
+        accuracy = Categorical_accuracy(y_pred, y_true)
+        false_alarm_rate = 1 - specificity
+        return Dict("Confusion_Matrix" => confusion_Matrix,
+                "Precision" => precision, "Recall" => recall,
+                "Specificity" => specificity, "F1_score" => f1_score,
+                "Accuracy" => accuracy, "False_alarm_rate" => false_alarm_rate)
+    else if avg_type == "micro"
+        confusion_matrix = Confusion_matrix(y_pred, y_true)
+        precision = mean(TP) / (mean(TP) + mean(FP))
+        recall = mean(TP) / (mean(TP) + mean(FN))
+        f1_score = 2 * precision * recall / (precision + recall)
+        specificity = mean(TN)/ (mean(TN) + mean(FP))
+        accuracy = Categorical_accuracy(y_pred, y_true)
+        false_alarm_rate = 1 - specificity
+        return Dict("Confusion_Matrix" => confusion_Matrix,
+                "Precision" => precision, "Recall" => recall,
+                "Specificity" => specificity, "F1_score" => f1_score,
+                "Accuracy" => accuracy, "False_alarm_rate" => false_alarm_rate)
+    end
 end
 
 # TODO

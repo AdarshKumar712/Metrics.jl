@@ -1,0 +1,209 @@
+# ROUGE score implementation
+# Ref: https://github.com/google/seq2seq/blob/master/seq2seq/metrics/rouge.py
+using DataStructures: OrderedDict
+
+function _get_ngrams(n, text)
+    ngrams_set = Set()
+    text_length = length(text)
+    max_index_ngram_start = text_length - n
+    for i in 1:max_index_ngram_start+1
+        push!(ngrams_set, tuple(text[i:i+n-1]))
+    end
+    return ngrams_set
+end
+
+function _split_into_words(sentences)
+    words = []
+    for i in 1:length(sentences)
+        temp = split(sentences[i], " ")
+        for j in temp
+            push!(words,j)
+        end
+    end
+    return words
+end
+
+function _get_word_ngrams(n, sentences)
+    @assert length(sentences) > 0
+    @assert n>0
+    
+    words = _split_into_words(sentences)
+    return _get_ngrams(n, words)
+end
+
+function _lcs(x, y)
+    n, m = length(x), length(y)
+    table = Dict()
+    for i in 1:n+1
+        for j in 1:m+1
+            if i==1 || j==1
+                table[i, j] = 0
+            elseif x[i-1] == y[j-1]
+                table[i, j] = table[i-1, j-1] + 1
+            else
+                table[i, j] = max(table[i-1, j], table[i, j-1])
+            end
+        end
+    end
+    return table
+end 
+
+function _len_lcs(x, y)
+    table = _lcs(x, y)
+    n, m = length(x), length(y)
+    return table[n+1, m+1]
+end
+
+function _recon_lcs(x, y)
+    i , j = length(x), length(y)
+    table = _lcs(x, y)
+           
+    function _recon(i, j)
+        if i == 1 || j == 1
+            return []
+        elseif x[i-1] == y[j-1]
+            return push!(_recon(i - 1, j - 1) ,(x[i - 1], i))
+        elseif table[i - 1, j] > table[i, j - 1]
+            return _recon(i - 1, j)
+        else
+            return _recon(i, j - 1)
+        end
+    end 
+
+    recon_tuple = tuple(map(x->x[1][1], _recon(i, j))...)
+end
+
+function rouge_n(evaluated_sentences, reference_sentences; n=2)
+    if length(evaluated_sentences) <= 0 || length(reference_sentences)<=0
+        throw(ArgumentError())
+    end
+    
+    evaluated_ngrams = _get_word_ngrams(n, evaluated_sentences)
+    reference_ngrams = _get_word_ngrams(n, reference_sentences)
+    reference_count = length(reference_ngrams)
+    evaluated_count = length(evaluated_ngrams)
+    
+    overlapping_ngrams = intersect(evaluated_ngrams, reference_ngrams)
+    print(overlapping_ngrams,"\n")
+    overlapping_count = length(overlapping_ngrams)
+    print(overlapping_count,"\n")
+    precision = 0.0
+    if evaluated_count != 0
+         precision = overlapping_count / evaluated_count
+    end
+    
+    recall = 0.0
+    if reference_count != 0
+         recall = overlapping_count / reference_count
+    end
+    
+    f1_score = 2.0 * ((precision * recall)) / (precision + recall + 1e-9)
+    return f1_score, precision, recall
+end
+
+function _f_p_r_lcs(llcs, m, n)
+    r_lcs = llcs / m
+    p_lcs = llcs / n
+    beta = p_lcs / (r_lcs + 1e-12)
+    num = (1 + (beta^2)) * r_lcs * p_lcs
+    denom = r_lcs + ((beta^2) * p_lcs)
+    f_lcs = num / (denom + 1e-12)
+    return f_lcs, p_lcs, r_lcs 
+end
+
+function rouge_l_sentence_level(evaluated_sentences, reference_sentences)
+    if length(evaluated_sentences) <= 0 || length(reference_sentences)<=0
+        throw(ArgumentError())
+    end
+    
+    reference_words = _split_into_words(reference_sentences)
+    evaluated_words = _split_into_words(evaluated_sentences)
+    m = length(reference_words)
+    n = length(evaluated_words)
+    lcs = _len_lcs(evaluated_words, reference_words)
+    return _f_p_r_lcs(lcs, m, n)
+end
+
+function _union_lcs(evaluated_sentences, reference_sentence)
+    if length(evaluated_sentences) <= 0
+        throw(ArgumentError())
+    end
+    
+    lcs_union = Set()
+    reference_words = split_into_words([reference_sentence])
+    combined_lcs_length = 0
+    for eval_s in evaluated_sentences
+        evaluated_words = _split_into_words([eval_s])
+        lcs = Set(_recon_lcs(reference_words, evaluated_words))
+        combined_lcs_length += length(lcs)
+        lcs_union = union(lcs, lcs_union)
+    end
+    
+    union_lcs_count = len(lcs_union)
+    union_lcs_value = union_lcs_count / combined_lcs_length
+    return union_lcs_value
+end
+
+function rouge_l_summary_level(evaluated_sentences, reference_sentences)
+    if length(evaluated_sentences) <= 0 || length(reference_sentences)<=0
+        throw(ArgumentError())
+    end
+    m = length(_split_into_words(reference_sentences))
+    n = length(_split_into_words(evaluated_sentences))
+    union_lcs_sum_across_all_references = 0
+    for ref_s in reference_sentences
+        union_lcs_sum_across_all_references += _union_lcs(evaluated_sentences, ref_s)
+    end
+    
+    return _f_p_r_lcs(union_lcs_sum_across_all_references, m, n)
+end
+
+function rouge(hypotheses, references)
+    rouge_1 = [rouge_n([hyp],[ref], n=1) for (hyp, ref) in zip(hypotheses, references)]
+    rouge_1_f, rouge_1_p, rouge_1_r = 0.0,0.0,0.0
+    for i in 1:length(rouge_1)
+        rouge_1_f+=rouge_1[i][1]
+        rouge_1_p+=rouge_1[i][2]
+        rouge_1_r+=rouge_1[i][3]
+    end
+    n = length(rouge_1)
+    rouge_1_f/= n
+    rouge_1_p/= n
+    rouge_1_r/= n
+    
+    rouge_2 = [rouge_n([hyp],[ref],n=2) for (hyp, ref) in zip(hypotheses, references)]
+    rouge_2_f, rouge_2_p, rouge_2_r = 0.0,0.0,0.0
+    for i in 1:length(rouge_2)
+        rouge_2_f+=rouge_2[i][1]
+        rouge_2_p+=rouge_2[i][2]
+        rouge_2_r+=rouge_2[i][3]
+    end
+    n = length(rouge_1)
+    rouge_2_f/= n
+    rouge_2_p/= n
+    rouge_2_r/= n
+    
+    rouge_l = [rouge_l_sentence_level([hyp],[ref]) for (hyp, ref) in zip(hypotheses, references)]
+    rouge_l_f, rouge_l_p, rouge_l_r = 0.0,0.0,0.0
+    for i in 1:length(rouge_l)
+        rouge_l_f+=rouge_l[i][1]
+        rouge_l_p+=rouge_l[i][2]
+        rouge_l_r+=rouge_l[i][3]
+    end
+    n = length(rouge_l)
+    rouge_l_f/= n
+    rouge_l_p/= n
+    rouge_l_r/= n
+
+    return OrderedDict(
+      "rouge_1 / f_score"=> rouge_1_f,
+      "rouge_1 / r_score"=> rouge_1_r,
+      "rouge_1 / p_score"=> rouge_1_p,
+      "rouge_2 / f_score"=> rouge_2_f,
+      "rouge_2 / r_score"=> rouge_2_r,
+      "rouge_2 / p_score"=> rouge_2_p,
+      "rouge_l / f_score"=> rouge_l_f,
+      "rouge_l / r_score"=> rouge_l_r,
+      "rouge_l / p_score"=> rouge_l_p,)
+    
+end

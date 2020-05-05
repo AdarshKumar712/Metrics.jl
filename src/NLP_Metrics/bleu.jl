@@ -1,9 +1,21 @@
-# Bilingual Evaluation Under Study (BLEU) score
+# Julia Implementation of BLEU and Smooth BLEU score
 # ref: https://github.com/tensorflow/nmt/blob/master/nmt/scripts/bleu.py#L56
+
 # Example: bleu_score([["apple is apple"]], ["apple is appl"])
  
 using DataStructures: OrderedDict
 
+"""
+    get_ngrams(segment, max_order)
+
+Extracts all n-grams upto a given maximum order from an input segment. Returns the counter containing all n-grams upto max_order in segment
+with a count of how many times each n-gram occurred.
+
+# Arguments 
+ - `segment`: text segment from which n-grams will be extracted.
+ - `max_order`: maximum length in tokens of the n-grams returned by this methods.
+
+"""
 function get_ngrams(segment, max_order)
     ngrams_count = OrderedDict()
     for order in 1:max_order
@@ -19,6 +31,19 @@ function get_ngrams(segment, max_order)
     return ngrams_count
 end
 
+"""
+    bleu_score(reference_corpus, translation_corpus; max_order=4, smooth=false)
+
+Computes BLEU score of translated segments against one or more references. Returns the `BLEU score`, `n-gram precisions`, `brevity penalty`, 
+geometric mean of n-gram precisions, translation_length and  reference_length
+
+# Arguments
+ - `reference_corpus`: list of lists of references for each translation. Each reference should be tokenized into a list of tokens.
+ - `translation_corpus`: list of translations to score. Each translation should be tokenized into a list of tokens.
+ - `max_order`: maximum n-gram order to use when computing BLEU score. 
+ - `smooth=false`: whether or not to apply. Lin et al. 2004 smoothing.
+
+"""
 function bleu_score(reference_corpus, translation_corpus; max_order=4, smooth=false)
     matches_by_order = zeros(max_order)
     possible_matches_by_order = zeros(max_order)
@@ -87,5 +112,5 @@ function bleu_score(reference_corpus, translation_corpus; max_order=4, smooth=fa
     end
     
     bleu = geo_mean * bp
-    return bleu, precisions, bp, ratio, translation_length, reference_length
+    return bleu, precisions, bp, geo_mean, translation_length, reference_length
 end

@@ -1,7 +1,16 @@
-# ROUGE score implementation
+# Julia implementation of ROUGE score
 # Ref: https://github.com/google/seq2seq/blob/master/seq2seq/metrics/rouge.py
 using DataStructures: OrderedDict
 
+"""
+    _get_ngrams(n, text)
+
+Calcualtes n-grams. Returns a set of n-grams.
+
+# Arguments:
+ - `n`: provide which n-grams to calculate
+ - `text`: An array of tokens
+"""
 function _get_ngrams(n, text)
     ngrams_set = Set()
     text_length = length(text)
@@ -12,6 +21,11 @@ function _get_ngrams(n, text)
     return ngrams_set
 end
 
+"""
+    _split_into_words(sentences)
+
+Splits multiple sentences into words and flattens the result
+"""
 function _split_into_words(sentences)
     words = []
     for i in 1:length(sentences)
@@ -23,6 +37,11 @@ function _split_into_words(sentences)
     return words
 end
 
+"""
+    _get_word_ngrams(n, sentences)
+
+Calculates word n-grams for multiple sentences.
+"""
 function _get_word_ngrams(n, sentences)
     @assert length(sentences) > 0
     @assert n>0
@@ -31,6 +50,13 @@ function _get_word_ngrams(n, sentences)
     return _get_ngrams(n, words)
 end
 
+"""
+    _lcs(x, y)
+
+Utility function to compute the length of the longest common subsequence (lcs) between two
+strings. The implementation below uses a DP programming algorithm and runs
+in O(nm) time where n = len(x) and m = len(y).
+"""
 function _lcs(x, y)
     n, m = length(x), length(y)
     table = Dict()
@@ -48,12 +74,22 @@ function _lcs(x, y)
     return table
 end 
 
+"""
+    _len_lcs(x, y)
+
+Returns the length of the Longest Common Subsequence between sequences x and y.
+"""
 function _len_lcs(x, y)
     table = _lcs(x, y)
     n, m = length(x), length(y)
     return table[n+1, m+1]
 end
 
+"""
+    _recons_lcs(x, y)
+
+Returns the Longest Subsequence between x and y.
+"""
 function _recon_lcs(x, y)
     i , j = length(x), length(y)
     table = _lcs(x, y)
@@ -73,6 +109,19 @@ function _recon_lcs(x, y)
     recon_tuple = tuple(map(x->x[1][1], _recon(i, j))...)
 end
 
+"""
+    rouge_n(evaluated_sentences, reference_sentences; n=2)
+
+Computes ROUGE-N of two text collections of sentences. Returns f1, precision, recall for ROUGE-N.
+
+# Arguments:
+ - `evaluated_sentences`: the sentences that have been picked by the summarizer
+ - `reference_sentences`: the sentences from the referene set
+ - `n`: size of ngram.  Defaults to 2.
+
+Source: (http://research.microsoft.com/en-us/um/people/cyl/download/
+  papers/rouge-working-note-v1.3.1.pdf)
+"""
 function rouge_n(evaluated_sentences, reference_sentences; n=2)
     if length(evaluated_sentences) <= 0 || length(reference_sentences)<=0
         throw(ArgumentError())
@@ -101,6 +150,18 @@ function rouge_n(evaluated_sentences, reference_sentences; n=2)
     return f1_score, precision, recall
 end
 
+"""
+    _f_p_r_lcs(llcs, m, n)
+
+Computes the LCS-based F-measure score
+
+# Arguments:
+ - `llcs`: Length of LCS
+ - `m`: number of words in reference summary
+ - `n`: number of words in candidate summary
+
+Source: (http://research.microsoft.com/en-us/um/people/cyl/download/papers/rouge-working-note-v1.3.1.pdf)
+"""
 function _f_p_r_lcs(llcs, m, n)
     r_lcs = llcs / m
     p_lcs = llcs / n
@@ -111,6 +172,28 @@ function _f_p_r_lcs(llcs, m, n)
     return f_lcs, p_lcs, r_lcs 
 end
 
+"""
+    rouge_l_sentence_level(evaluated_sentences, reference_sentences)
+
+Computes ROUGE-L (sentence level) of two text collections of sentences.
+
+Calculated according to:
+  R_lcs = LCS(X,Y)/m,
+  P_lcs = LCS(X,Y)/n,
+  F_lcs = ((1 + beta^2)*R_lcs*P_lcs) / (R_lcs + (beta^2) * P_lcs)
+ 
+where:
+  X = reference summary
+  Y = Candidate summary
+  m = length of reference summary
+  n = length of candidate summary
+  
+# Argumnets:
+ - `evaluated_sentences`: the sentences that have been picked by the summarizer
+ - `reference_sentences`: the sentences from the referene set
+
+Source: (http://research.microsoft.com/en-us/um/people/cyl/download/papers/rouge-working-note-v1.3.1.pdf)
+"""
 function rouge_l_sentence_level(evaluated_sentences, reference_sentences)
     if length(evaluated_sentences) <= 0 || length(reference_sentences)<=0
         throw(ArgumentError())
@@ -124,6 +207,18 @@ function rouge_l_sentence_level(evaluated_sentences, reference_sentences)
     return _f_p_r_lcs(lcs, m, n)
 end
 
+"""
+    _union_lcs(evaluated_sentences, reference_sentence)
+
+Returns LCS_u(r_i, C) which is the LCS score of the union longest common subsequence between reference sentence ri and candidate summary C.
+
+# Arguments:
+ - `evaluated_sentences`: the sentences that have been picked by the summarizer
+ - `reference_sentence`: one of the sentences in the reference summaries
+
+For example, if r_i= w1 w2 w3 w4 w5, and C contains two sentences: c1 = w1 w2 w6 w7 w8 and c2 = w1 w3 w8 w9 w5, then the longest common subsequence of r_i and c1 is “w1 w2” and the longest common subsequence of r_i and c2 is “w1 w3 w5”. The union longest common subsequence of r_i, c1, and c2 is “w1 w2 w3 w5” and LCS_u(r_i, C) = 4/5.
+
+"""
 function _union_lcs(evaluated_sentences, reference_sentence)
     if length(evaluated_sentences) <= 0
         throw(ArgumentError())
@@ -144,6 +239,30 @@ function _union_lcs(evaluated_sentences, reference_sentence)
     return union_lcs_value
 end
 
+"""
+    rouge_l_summary_level(evaluated_sentences, reference_sentences)
+
+Computes ROUGE-L (summary level) of two text collections of sentences.
+
+Calculated according to:
+  R_lcs = SUM(1, u)[LCS<union>(r_i,C)]/m
+  P_lcs = SUM(1, u)[LCS<union>(r_i,C)]/n
+  F_lcs = ((1 + beta^2)*R_lcs*P_lcs) / (R_lcs + (beta^2) * P_lcs)
+
+where:
+  SUM(i,u) = SUM from i through u
+  u = number of sentences in reference summary
+  C = Candidate summary made up of v sentences
+  m = number of words in reference summary
+  n = number of words in candidate summary
+  
+# Arguments:
+ - `evaluated_sentences`: the sentences that have been picked by the summarizer
+ - `reference_sentence`: the sentences in the reference summaries
+
+Source: (http://research.microsoft.com/en-us/um/people/cyl/download/papers/rouge-working-note-v1.3.1.pdf)
+  
+"""
 function rouge_l_summary_level(evaluated_sentences, reference_sentences)
     if length(evaluated_sentences) <= 0 || length(reference_sentences)<=0
         throw(ArgumentError())
@@ -158,6 +277,11 @@ function rouge_l_summary_level(evaluated_sentences, reference_sentences)
     return _f_p_r_lcs(union_lcs_sum_across_all_references, m, n)
 end
 
+"""
+    rouge(hypotheses, references)
+
+Calculates average rouge scores for a list of hypotheses and references.
+"""
 function rouge(hypotheses, references)
     rouge_1 = [rouge_n([hyp],[ref], n=1) for (hyp, ref) in zip(hypotheses, references)]
     rouge_1_f, rouge_1_p, rouge_1_r = 0.0,0.0,0.0

@@ -4,7 +4,7 @@ using StatsBase: mean
 # Classification Metrics and Plots
 # This files contains various metrics used in Classifiaction problems
 
-# Onehot_encode
+# One Hot encode
 function onehot_encode(y, labels)
    onehot_arr = zeros(length(labels), length(y))
    for i in 1:length(y)
@@ -23,7 +23,11 @@ function onecold(y)
     return onecold_arr
 end
 
-# Confusion Matrix
+"""
+    confusion_matrix(y_pred, y_true)
+
+Function to create a confusion_matrix for classification problems based on provided `y_pred` and `y_true`. Expects `y_true`, to be onehot_enocded already.
+"""
 function confusion_matrix(y_pred, y_true)
     @assert size(y_pred) == size(y_true)
     label_count = size(y_true, 1)
@@ -31,7 +35,11 @@ function confusion_matrix(y_pred, y_true)
     return ŷ * transpose(y_true) 
 end
   
-# TFPN  
+"""
+    TFPN(y_pred, y_true)
+
+Returns `Confusion Matrix` and `True Positive`, `True Negative`, `False Positive` and `False Negative` for each class based on `y_pred` and `y_true`. Expects `y_true`, to be onehot_enocded already.  
+""" 
 function TFPN(y_pred, y_true)
     @assert size(y_pred) == size(y_true)
     label_count = size(y_true, 1)
@@ -47,26 +55,42 @@ function TFPN(y_pred, y_true)
     return ConfusionMatrix,TP, TN, FP, FN
 end
 
-# Averaged Binary Accuracy 
-function binary_accuracy(y_pred, y_true; threshold = 0.5)
+"""
+    binary_accuracy(y_pred, y_true; threshold=0.5)
+
+Calculates Averaged Binary Accuracy based on `y_pred` and `y_true`. Argument `threshold` is used to specify the minimum predicted probability `y_pred` required to be labelled as `1`. Default value set as `0.5`.
+""" 
+function binary_accuracy(y_pred, y_true; threshold=0.5)
     @assert size(y_pred) == size(y_true)
     return sum((y_pred .>= threshold) .== y_true) / size(y_true, 1)
 end
 
-# Average Categorical Accuracy
+"""
+    categorical_accuracy(y_pred, y_true)
+
+Calculates Averaged Categorical Accuracy based on `y_pred` and `y_true`.
+"""
 function categorical_accuracy(y_pred, y_true)
     @assert size(y_pred) == size(y_true)
     return sum(onecold(y_pred) .== onecold(y_true)) / size(y_true, 2)
 end
 
-# Average Sparse Categorical Accuracy
+"""
+    sparse_categorical(y_pred, y_true)
+
+Calculated Sparse Categorical Accuracy based on `y_pred` and `y_true`. It evaluates the maximal true value is equal to the index of the maximal predicted value. Here, `y_true` is expected to provide only an integer as label for each data element (ie. not one hot encoded). 
+"""
 function sparse_categorical(y_pred, y_true)
     @assert size(y_pred, 2) == length(y_true)
     return sum(onecold(y_pred) .== y_true) / size(y_true, 1)
 end
 
-# Top-k Categorical
-function top_k_categorical(y_pred, y_true, k=3)
+"""
+    top_k_categorical(y_pred, y_true; k=3)
+
+Evaluates if the index of true value is equal to any of the indices of top k predicted values. Default value of `k` set to `3`. 
+"""
+function top_k_categorical(y_pred, y_true; k=3)
     @assert size(y_pred) == size(y_true)
     count = 0
     sparse_y = onecold(y_true)
@@ -82,7 +106,12 @@ function top_k_categorical(y_pred, y_true, k=3)
     return count / length(sparse_y) 
 end
 
-# Top-k-sparse_categorical
+
+"""
+    top_k_sparse_categorical(y_pred, y_true; k=3)
+
+Evaluates if the true value is equal to any of the indices of top k predicted values. Default value of `k` set to `3`. Similar to `sparse_categorical`, expects the `y_true` to provide only an integer as label for each data element (ie. not one hot encoded).
+"""
 function top_k_sparse_categorical(y_pred, y_true; k=3)
     count = 0
     for i in 1:length(y_true)
@@ -107,9 +136,19 @@ function calc_instances(y)
    return instances
 end
 
+"""
+    precision(y_pred, y_true; avg_type="macro", sample_weights=nothing)
 
-# Precision
-function Precision(y_pred, y_true; avg_type="macro", sample_weights=nothing)
+Computes the precision of the predictions with respect to the labels. 
+
+# Arguments
+ - `y_pred`: predicted values.
+ - `y_true`: ground truth values on the basis of which predicted values are to be assessed.
+ - `avg_type="macro"`: Type of average to be used while calculating precision of multiclass models. Can take values as `macro`, `micro` and `weighted`. Default set to `macro`.
+ - `sample_weights`: Class weights to be provided when `avg_type` is set to `weighted`. Useful in case of imbalanced classes.
+ 
+"""
+function precision(y_pred, y_true; avg_type="macro", sample_weights=nothing)
     _,TP, TN, FP, FN = TFPN(y_pred, y_true)
     # Macro-averaged Precision
     if avg_type == "macro"
@@ -118,7 +157,7 @@ function Precision(y_pred, y_true; avg_type="macro", sample_weights=nothing)
     elseif avg_type == "micro"   
         return mean(TP) / (mean(TP) + mean(FP))
     # Weighted-Averaged Precision
-    else
+    elseif avg_type == "weighted"
         weights = []
         if sample_weights != nothing
             weights = sample_weights
@@ -129,8 +168,20 @@ function Precision(y_pred, y_true; avg_type="macro", sample_weights=nothing)
     end
 end
 
-# Recall
-function Recall(y_pred, y_true; avg_type="macro", sample_weights=nothing)
+"""
+    recall(y_pred, y_true; avg_type="macro", sample_weights=nothing)
+
+Computes the recall of the predictions with respect to the labels.
+
+# Arguments
+ - `y_pred`: predicted values.
+ - `y_true`: ground truth values on the basis of which predicted values are to be assessed.
+ - `avg_type="macro"`: Type of average to be used while calculating precision of multiclass models. Can take values as `macro`, `micro` and `weighted`. Default set to `macro`.
+ - `sample_weights`: Class weights to be provided when `avg_type` is set to `weighted`. Useful in case of imbalanced classes.
+
+Aliases: `sensitivity` and `detection_rate`
+"""
+function recall(y_pred, y_true; avg_type="macro", sample_weights=nothing)
     _,TP, TN, FP, FN = TFPN(y_pred, y_true)
     # Macro-averaged Precision
     if avg_type == "macro"
@@ -149,21 +200,41 @@ function Recall(y_pred, y_true; avg_type="macro", sample_weights=nothing)
         return mean((TP ./ (TP .+ FN .+ eps(eltype(TP)))) .* weights)
     end
 end
+const Sensitivity = Recall
+const Detection_rate = Recall
 
-# F_beta score
-function F_beta_score(y_pred, y_true; β=1, avg_type="macro", sample_weights=nothing)
+"""
+    f_beta_score(y_pred, y_true; β=1, avg_type="macro", sample_weights=nothing)
+
+Compute fbeta score. The F_beta score is the weighted harmonic mean of precision and recall, reaching its optimal value at 1 and its worst value at 0.
+
+# Arguments
+ - `y_pred`: predicted values.
+ - `y_true`: ground truth values on the basis of which predicted values are to be assessed.
+ - `β=1`: the weight of precision in the combined score. If `β<1`, more weight given to `precision`, while `β>1` favors recall.
+ - `avg_type="macro"`: Type of average to be used while calculating precision of multiclass models. Can take values as `macro`, `micro` and `weighted`. Default set to `macro`.
+ - `sample_weights`: Class weights to be provided when `avg_type` is set to `weighted`. Useful in case of imbalanced classes.
+
+"""
+function f_beta_score(y_pred, y_true; β=1, avg_type="macro", sample_weights=nothing)
     recall_ = Recall(y_pred, y_true, avg_type=avg_type, sample_weights=sample_weights)
     precision_ = Precision(y_pred, y_true, avg_type=avg_type, sample_weights=sample_weights)
     return (1 + β^2) * precision_ * recall_ / (precision_ + (β^2) * recall_ + eps(eltype(recall)))
 end
 
-# Sensitivity
-const Sensitivity = Recall
-# Detection Rate
-const Detection_rate = Recall
 
-# Specificity
-function Specificity(y_pred, y_true; avg_type="macro", sample_weights=nothing)
+"""
+    specificity(y_pred, y_true; avg_type="macro", sample_weights=nothing)
+
+Computes the specificity of the predictions with respect to the labels.
+
+# Arguments
+ - `y_pred`: predicted values.
+ - `y_true`: ground truth values on the basis of which predicted values are to be assessed.
+ - `avg_type="macro"`: Type of average to be used while calculating precision of multiclass models. Can take values as `macro`, `micro` and `weighted`. Default set to `macro`.
+ - `sample_weights`: Class weights to be provided when `avg_type` is set to `weighted`. Useful in case of imbalanced classes.
+"""
+function specificity(y_pred, y_true; avg_type="macro", sample_weights=nothing)
     _, TP, TN, FP, FN = TFPN(y_pred, y_true)
     # Macro-averaged Precision
     if avg_type == "macro"
@@ -183,13 +254,29 @@ function Specificity(y_pred, y_true; avg_type="macro", sample_weights=nothing)
     end
 end
 
-# False Alarm Rate
-function False_alarm_rate(y_pred, y_true; avg_type="macro", sample_weights=nothing)
-    return 1 - Specificity(y_pred, y_true, avg_type, sample_weights)
+"""
+    false_alarm_rate(y_pred, y_true; avg_type="macro", sample_weights=nothing)
+
+Computes the false_alarm_raye of the predictions with respect to the labels as `1 - specificity(y_pred, y_true, avg_type, sample_weights)`
+
+# Arguments
+ - `y_pred`: predicted values.
+ - `y_true`: ground truth values on the basis of which predicted values are to be assessed.
+ - `avg_type="macro"`: Type of average to be used while calculating precision of multiclass models. Can take values as `macro`, `micro` and `weighted`. Default set to `macro`.
+ - `sample_weights`: Class weights to be provided when `avg_type` is set to `weighted`. Useful in case of imbalanced classes.
+
+See also: [`specificity`](@ref)
+"""
+function false_alarm_rate(y_pred, y_true; avg_type="macro", sample_weights=nothing)
+    return 1 - specificity(y_pred, y_true, avg_type, sample_weights)
 end
 
-# Cohen's Kappa
-function Cohen_Kappa(y_pred, y_true)
+"""
+    cohen_kappa(y_pred, y_true)
+
+
+"""
+function cohen_kappa(y_pred, y_true)
     _, tp, tn, fp, fn = TFPN(y_pred, y_true)
     mrg_a = ((tp .+ fn) .* (tp .+ fp)) ./ (tp .+ fn .+ fp .+ tn)
     mrg_b = ((fp .+ tn) .* (fn .+ tn)) ./ (tp .+ fn .+ fp .+ tn)
@@ -199,8 +286,20 @@ function Cohen_Kappa(y_pred, y_true)
     return cohens_kappa
 end
 
-# StatsfromTFPN
-function StatsfromTFPN(TP, TN, FP, FN)
+"""
+    statsfromTFPN(TP, TN, FP, FN)
+
+Computes statistics in case of binary classification or one-vs-all statsitics in case of multiclass classification.
+
+# Arguments:
+ - `TP`: true positive values
+ - `TN`: true negative values
+ - `FP`: false positive values
+ - `FN`: false negative values
+
+Return the result stats as a dictionary.
+"""
+function statsfromTFPN(TP, TN, FP, FN)
     Confusion_Matrix = reshape([TP, FP, FN, TN], 2, 2)
     Precision = TP / (TP + FP + eps(eltype(TP)))
     Recall = TP / (TP + FN + eps(eltype(TP)))
@@ -214,7 +313,13 @@ function StatsfromTFPN(TP, TN, FP, FN)
                 :Accuracy => Accuracy)
 end
 
-# Classwise Stats
+"""
+    classwise_stats(y_pred, y_true)
+
+Computes statistics for each of the class for multiclass classification based on provided `y_pred` and `y_true`.
+
+Return the result stats as a dictionary.
+"""
 function Classwise_Stats(y_pred, y_true)
     _, TP, TN, FP, FN = TFPN(y_pred, y_true)
     ClasswiseStats = Dict() 
@@ -224,9 +329,14 @@ function Classwise_Stats(y_pred, y_true)
     return ClasswiseStats
 end
 
-# Global Stats
-# TODO: add weighted stats option as above functions
-function Global_Stats(y_pred, y_true; avg_type="macro")
+"""
+    global_stats(y_pred, y_true; avg_type="macro")
+
+Computes the overall statistics based on provided `y_pred` and `y_true`. `avg_type` allows to specify the type of average to be used while evaluating the stats. Currently, it can take values as "macro" or "micro".
+
+Return the result stats as a dictionary.
+"""
+function global_stats(y_pred, y_true; avg_type="macro")
     confusion_matrix_, TP, TN, FP, FN = TFPN(y_pred, y_true) 
     if avg_type == "macro"
         precision = mean(TP ./ (TP .+ FP .+ eps(eltype(TP))))
@@ -251,6 +361,7 @@ function Global_Stats(y_pred, y_true; avg_type="macro")
                 "Specificity" => specificity, "F1_score" => f1_score,
                 "Accuracy" => accuracy, "False_alarm_rate" => false_alarm_rate)
     end
+    # TODO: add weighted stats option as above functions
 end
 
 # TODO

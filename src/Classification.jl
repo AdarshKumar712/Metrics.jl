@@ -1,5 +1,3 @@
-using StatsBase: mean
-
 # Classification Metrics and Plots
 # This files contains various metrics used in Classifiaction problems
 

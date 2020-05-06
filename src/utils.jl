@@ -1,5 +1,4 @@
 # Util functions
-using DataFrames
 include("./Classification.jl")
 
 """

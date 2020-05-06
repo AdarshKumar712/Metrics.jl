@@ -1,4 +1,3 @@
-using Plots
 using StatsBase: mean
 
 # Classification Metrics and Plots
@@ -274,7 +273,11 @@ end
 """
     cohen_kappa(y_pred, y_true)
 
+Measures the agreement between two raters (predicted and ground truth, here) who each classify N items into C mutually exclusive categories, using the observed data to calculate the probabilities of each observer randomly seeing each category.
+If the raters are in complete agreement then κ = 1. If there is no agreement among the raters other than what would be expected by chance,
+κ = 0.
 
+Ref: [Cohen's Kappa](https://en.wikipedia.org/wiki/Cohen%27s_kappa)
 """
 function cohen_kappa(y_pred, y_true)
     _, tp, tn, fp, fn = TFPN(y_pred, y_true)

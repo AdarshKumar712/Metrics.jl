@@ -21,7 +21,7 @@ function ranking_stats_k(y_rec, y_rel, k = 10)
     y_rec_k, y_rel_k = y_rec[:, top_k], y_rel[:, top_k]
     tp = sum(y_rel_k .== 1)
     total_positive = sum(y_rel.==1)
-    precision_k = k!=0 ? tp / k: 1
+    precision_k = k!=0 ? tp / k : 1
     recall_k = total_positive!=0 ? tp / total_positive : 1
     f1_k = (total_positive + k!=0) ? (2 * tp / (total_positive + k)) : 1 
     return Dict("precision_k" => precision_k,

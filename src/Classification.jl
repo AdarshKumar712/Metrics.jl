@@ -197,8 +197,8 @@ function recall(y_pred, y_true; avg_type="macro", sample_weights=nothing)
         return mean((TP ./ (TP .+ FN .+ eps(eltype(TP)))) .* weights)
     end
 end
-const Sensitivity = Recall
-const Detection_rate = Recall
+const Sensitivity = recall
+const Detection_rate = recall
 
 """
     f_beta_score(y_pred, y_true; β=1, avg_type="macro", sample_weights=nothing)
@@ -214,8 +214,8 @@ Compute fbeta score. The F_beta score is the weighted harmonic mean of precision
 
 """
 function f_beta_score(y_pred, y_true; β=1, avg_type="macro", sample_weights=nothing)
-    recall_ = Recall(y_pred, y_true, avg_type=avg_type, sample_weights=sample_weights)
-    precision_ = Precision(y_pred, y_true, avg_type=avg_type, sample_weights=sample_weights)
+    recall_ = recall(y_pred, y_true, avg_type=avg_type, sample_weights=sample_weights)
+    precision_ = precision(y_pred, y_true, avg_type=avg_type, sample_weights=sample_weights)
     return (1 + β^2) * precision_ * recall_ / (precision_ + (β^2) * recall_ + eps(eltype(recall)))
 end
 

@@ -2,7 +2,7 @@
 module CVMetrics
 
 include("iou.jl")
-inlcude("img_quality.jl")
+include("img_quality.jl")
 
 end
 

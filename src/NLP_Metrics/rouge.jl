@@ -1,6 +1,5 @@
 # Julia implementation of ROUGE score
 # Ref: https://github.com/google/seq2seq/blob/master/seq2seq/metrics/rouge.py
-using DataStructures: OrderedDict
 
 """
     _get_ngrams(n, text)

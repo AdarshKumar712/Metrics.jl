@@ -1,4 +1,3 @@
-using Flux: crossentropy
 # NLP Metrics
 # NLP_Metrics to support advanced analysis of NLP Models 
 

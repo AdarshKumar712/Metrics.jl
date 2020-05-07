@@ -1,5 +1,4 @@
 # Image Quality Metrics
-using StatsBase
 
 """
     PSNR(img1, img2)

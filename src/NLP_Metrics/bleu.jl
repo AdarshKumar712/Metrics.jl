@@ -2,8 +2,6 @@
 # ref: https://github.com/tensorflow/nmt/blob/master/nmt/scripts/bleu.py#L56
 
 # Example: bleu_score([["apple is apple"]], ["apple is appl"])
- 
-using DataStructures: OrderedDict
 
 """
     get_ngrams(segment, max_order)

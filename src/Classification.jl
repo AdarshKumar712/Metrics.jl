@@ -321,7 +321,7 @@ Computes statistics for each of the class for multiclass classification based on
 
 Return the result stats as a dictionary.
 """
-function Classwise_Stats(y_pred, y_true)
+function classwise_stats(y_pred, y_true)
     _, TP, TN, FP, FN = TFPN(y_pred, y_true)
     ClasswiseStats = Dict() 
     for i in 1:size(y_true, 1)

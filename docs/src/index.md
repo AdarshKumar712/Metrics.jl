@@ -17,7 +17,7 @@ One of the most obvious way would be to use the `magnitude` of loss function as 
 ```
 using Metrics
 
-Metrics.report_stats(y\_pred, y_true)  # where y\_pred are the predicted values and y\_true are onehot_encoded ground truth values.
+Metrics.report_stats(y_pred, y_true)  # where y_pred are the predicted values and y_true are onehot_encoded ground truth values.
 
 ```
 

@@ -8,9 +8,9 @@ Evaluates the relevancy of top k recommendations using `precison@k`, `recall@k` 
 Here, `y_rec` are predicted probabilities for recommendation and `y_rel` defines as `1` if particular result is relevant, else `0`.
 The shape of `y_rec` is expected to be (1, N_elements).<br>
 
-`precison_k` is evaluated as `Recommended_items_that_are_relevant / Total_Recommended_items`
-`recall_l` is evaluated as `Recommended_items_that_are_relevant / Total_Relevant_items`
-`f1_k` is evaluated as `2 * Recommended_items_that_are_relevant / (Total_Recommended_items + Total_Relevant_items)`
+* `precison_k` is evaluated as `Recommended_items_that_are_relevant / Total_Recommended_items`.
+* `recall_l` is evaluated as `Recommended_items_that_are_relevant / Total_Relevant_items`.
+* `f1_k` is evaluated as `2 * Recommended_items_that_are_relevant / (Total_Recommended_items + Total_Relevant_items)`.
 """
 function ranking_stats_k(y_rec, y_rel, k = 10)
     @assert size(y_rec) == size(y_rel)
@@ -35,7 +35,7 @@ end
 Evaluates how much of the relevant documents are concentrated in the highest ranked predictions. 
 
 Calculated as
-    ∑(Recall@i - Recall@i-1)* Precision@i for i = (1, 2, 3....k)
+    `∑(Recall@i - Recall@i-1)* Precision@i for i = (1, 2, 3....k)`
 
 Here, `y_rec` are predicted probabilities for recommendation and `y_rel` defines as `1` if particular result is relevant, else `0`.
 The shape of `y_rec` is expected to be (1, N_elements)

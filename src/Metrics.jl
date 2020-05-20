@@ -1,6 +1,8 @@
 module Metrics
 # Module for DL Metrics
 
+export mae, mse, msle, male, r2_score, adjusted_r2_score
+
 using StatsBase, DataFrames
 using Flux: crossentropy
 using DataStructures: OrderedDict

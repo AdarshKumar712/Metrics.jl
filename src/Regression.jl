@@ -27,7 +27,8 @@ Mean Absolute Logarithmic Error. Calculated as `sum(|log.(y_true) .- log.(y_pred
 """
 function male(y_pred, y_true)
     @assert length(y_true) == length(y_pred)
-    return sum(abs.(log.(y_true) .- log.(y_pred)))  / length(y_true)
+    epsilon = eps(eltype(y_pred)(1.0))
+    return sum(abs.(log.(y_true .+ epsilon) .- log.(y_pred .+ epsilon)))  / length(y_true)
 end
 
 """
@@ -38,7 +39,8 @@ Calculated as `sum((log.(y_true) .- log.(y_pred)).^2) / length(y_true)` based on
 """
 function msle(y_pred, y_true)
     @assert length(y_true) == length(y_pred)
-    return sum((log.(y_true) .- log.(y_pred)).^2)  / length(y_true)
+    epsilon = eps(eltype(y_pred)(1.0))
+    return sum((log.(y_true .+ epsilon) .- log.(y_pred .+ epsilon)).^2)  / length(y_true)
 end
 
 """
@@ -66,6 +68,7 @@ See also: [`r2_score`](@ref)
 function adjusted_r2_score(y_pred, y_true, n)		# n -> number of predictors(independent variables in X)
     @assert length(y_true) == length(y_pred)
     score = r2_score(y_pred, y_true)
-    return 1 - ((1 - score) * (length(y_true) -1)) / ( length(y_true) - n -1)
+    epsilon = eps(eltype(y_pred)(1.0))
+    return 1 - ((1 - score) * (length(y_true) -1)) / abs(( length(y_true) - n - 1 + epsilon))
 end
 

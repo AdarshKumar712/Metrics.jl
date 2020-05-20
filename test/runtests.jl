@@ -2,5 +2,10 @@ using Metrics
 using Test
 
 @testset "Metrics.jl" begin
-    # Write your own tests here.
+    include("regression.jl")
+    include("classification.jl")
+    include("rank.jl")
+    include("nlp.jl")
+    include("cv.jl")
+    include("utils.jl")
 end

@@ -28,3 +28,12 @@ Metrics.statsfromTFPN
 Metrics.classwise_stats
 Metrics.global_stats
 ```
+
+## Utils
+
+These are some utility functions to aid the overall performance analysis.
+
+```@docs
+Metrics.bin_to_cat
+Metrics.TFPN
+```

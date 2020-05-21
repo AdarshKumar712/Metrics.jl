@@ -5,9 +5,22 @@
 function onehot_encode(y, labels)
    onehot_arr = zeros(length(labels), length(y))
    for i in 1:length(y)
-       onehot_arr[Int(y[i]), i] = 1
+       onehot_arr[Int(y[i]) + 1, i] = 1
    end
    onehot_arr
+end
+
+"""
+    bin_to_cat(y_pred, y_true)
+
+Function to convert binary type of data to categorical with two categories. Return `y_pred` and `y_true` of shape `(2, length(y_pred))` as tuple. Utility function to support performance metrics like `Precision`, `Recall` etc, where the function first need to be converted to categorical form before applying metric. 
+""" 
+function bin_to_cat(y_pred, y_true)
+    @assert length(y_pred) == length(y_true)
+    y_pred_ = zeros(2, length(y_pred))
+    y_pred_[2, :] = y_pred
+    y_pred_[1, :] = 1 .- y_pred
+    return (y_pred_, onehot_encode(y_true, 0:1))
 end
 
 # Onecold
@@ -75,11 +88,11 @@ end
 """
     sparse_categorical(y_pred, y_true)
 
-Calculated Sparse Categorical Accuracy based on `y_pred` and `y_true`. It evaluates the maximal true value is equal to the index of the maximal predicted value. Here, `y_true` is expected to provide only an integer as label for each data element (ie. not one hot encoded). 
+Calculated Sparse Categorical Accuracy based on `y_pred` and `y_true`. It evaluates the maximal true value is equal to the index of the maximal predicted value. Here, `y_true` is expected to provide only an integer (start from `0` index) as label for each data element (ie. not one hot encoded). 
 """
 function sparse_categorical(y_pred, y_true)
     @assert size(y_pred, 2) == length(y_true)
-    return sum(onecold(y_pred) .== y_true) / size(y_true, 1)
+    return sum(onecold(y_pred) .== (y_true .+ 1) ) / size(y_true, 1)
 end
 
 """
@@ -94,7 +107,7 @@ function top_k_categorical(y_pred, y_true; k=3)
     for i in 1:size(y_true, 2)
         top_k = partialsortperm(y_pred[:,i], 1:k, lt= >)
         for j in 1:k
-            if top_k[j] == sparse_y[i]
+            if top_k[j] == sparse_y[i] 
                 count+=1
                 break
             end
@@ -107,14 +120,14 @@ end
 """
     top_k_sparse_categorical(y_pred, y_true; k=3)
 
-Evaluates if the true value is equal to any of the indices of top k predicted values. Default value of `k` set to `3`. Similar to `sparse_categorical`, expects the `y_true` to provide only an integer as label for each data element (ie. not one hot encoded).
+Evaluates if the true value is equal to any of the indices of top k predicted values. Default value of `k` set to `3`. Similar to `sparse_categorical`, expects the `y_true` to provide only an integer (start from `0` index) as label for each data element (ie. not one hot encoded).
 """
 function top_k_sparse_categorical(y_pred, y_true; k=3)
     count = 0
     for i in 1:length(y_true)
         top_k = partialsortperm(y_pred[:,i], 1:k, lt= >)
         for j in 1:k
-            if top_k[j] == y_true[i]
+            if top_k[j] == y_true[i] + 1
                 count+=1
                 break
             end
@@ -197,8 +210,8 @@ function recall(y_pred, y_true; avg_type="macro", sample_weights=nothing)
         return mean((TP ./ (TP .+ FN .+ eps(eltype(TP)))) .* weights)
     end
 end
-const Sensitivity = recall
-const Detection_rate = recall
+const sensitivity = recall
+const detection_rate = recall
 
 """
     f_beta_score(y_pred, y_true; β=1, avg_type="macro", sample_weights=nothing)
@@ -216,7 +229,7 @@ Compute fbeta score. The F_beta score is the weighted harmonic mean of precision
 function f_beta_score(y_pred, y_true; β=1, avg_type="macro", sample_weights=nothing)
     recall_ = recall(y_pred, y_true, avg_type=avg_type, sample_weights=sample_weights)
     precision_ = precision(y_pred, y_true, avg_type=avg_type, sample_weights=sample_weights)
-    return (1 + β^2) * precision_ * recall_ / (precision_ + (β^2) * recall_ + eps(eltype(recall)))
+    return (1 + β^2) * precision_ * recall_ / (precision_ + (β^2) * recall_ + eps(eltype(y_pred)))
 end
 
 

@@ -73,7 +73,6 @@ function bleu_score(reference_corpus, translation_corpus; max_order=4, smooth=fa
         for key in keys_union
                  overlap[key] = min(translation_ngram_counts[key],  merged_ref_ngram_counts[key])
         end
-        print(length(overlap),"\n")
         for key in overlap
             matches_by_order[length(key[1])] += key[2]
         end
@@ -84,8 +83,6 @@ function bleu_score(reference_corpus, translation_corpus; max_order=4, smooth=fa
             end
         end
     end
-    print(matches_by_order,"\n")
-    print(possible_matches_by_order,"\n")
     precisions = zeros(max_order)
     for i in 1:max_order
         if smooth

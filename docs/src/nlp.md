@@ -17,8 +17,3 @@ Metrics.rouge_l_summary_level
 Metrics.rouge
 ```
 
-## Other Metrics
-
-```@docs
-Metrics.perplexity
-```

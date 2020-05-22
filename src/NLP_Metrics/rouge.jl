@@ -132,9 +132,7 @@ function rouge_n(evaluated_sentences, reference_sentences; n=2)
     evaluated_count = length(evaluated_ngrams)
     
     overlapping_ngrams = intersect(evaluated_ngrams, reference_ngrams)
-    print(overlapping_ngrams,"\n")
     overlapping_count = length(overlapping_ngrams)
-    print(overlapping_count,"\n")
     precision = 0.0
     if evaluated_count != 0
          precision = overlapping_count / evaluated_count
@@ -224,7 +222,7 @@ function _union_lcs(evaluated_sentences, reference_sentence)
     end
     
     lcs_union = Set()
-    reference_words = split_into_words([reference_sentence])
+    reference_words = _split_into_words([reference_sentence])
     combined_lcs_length = 0
     for eval_s in evaluated_sentences
         evaluated_words = _split_into_words([eval_s])
@@ -233,7 +231,7 @@ function _union_lcs(evaluated_sentences, reference_sentence)
         lcs_union = union(lcs, lcs_union)
     end
     
-    union_lcs_count = len(lcs_union)
+    union_lcs_count = length(lcs_union)
     union_lcs_value = union_lcs_count / combined_lcs_length
     return union_lcs_value
 end
@@ -272,7 +270,6 @@ function rouge_l_summary_level(evaluated_sentences, reference_sentences)
     for ref_s in reference_sentences
         union_lcs_sum_across_all_references += _union_lcs(evaluated_sentences, ref_s)
     end
-    
     return _f_p_r_lcs(union_lcs_sum_across_all_references, m, n)
 end
 

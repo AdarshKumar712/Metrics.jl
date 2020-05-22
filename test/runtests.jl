@@ -1,5 +1,8 @@
 using Metrics
 using Test
+using Random
+
+Random.seed!(0)
 
 @testset "Metrics.jl" begin
     include("regression.jl")
@@ -7,5 +10,4 @@ using Test
     include("rank.jl")
     include("nlp.jl")
     include("cv.jl")
-    include("utils.jl")
 end

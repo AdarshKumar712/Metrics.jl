@@ -7,7 +7,7 @@ using Metrics
     @test PSNR(img1, img2) == 55.337343497964795
     
     box1 = Dict("x1" => 0, "x2" => 6, "y1" => 6, "y2" => 0)
-    box1 = Dict("x1" => 2, "x2" => 8, "y1" => 8, "y2" => 2)
+    box2 = Dict("x1" => 2, "x2" => 8, "y1" => 8, "y2" => 2)
 
     @test IoU(box1, box2) == 0.2857142857142857
     

@@ -8,7 +8,7 @@ using Metrics
 
     @testset "rank_stats_k" begin
         rank_out = ranking_stats_k(y_rec, y_rel; k=6)
-        for i in rank_out.keys
+        for i in keys(rank_out)
             @test rank_out[i] == output_rank_stats[i]
         end
     end

@@ -1,5 +1,5 @@
 using Metrics
-using Data
+using DataStructures: OrderedDict
 
 @testset "NLP" begin
     
@@ -23,10 +23,10 @@ using Data
     
     @testset "rouge" begin
         rouge_out = rouge(hypothesis, ref_corpus)
-        for key in output.keys
+        for key in keys(output)
               @test rouge_out[key] ≈ output[key]
         end
 
-        @test rouge_l_summary(hypothesis, ref_corpus) == (0.2499999999995, 0.25, 0.25)
+        @test rouge_l_summary_level(hypothesis, ref_corpus) == (0.2499999999995, 0.25, 0.25)
     end
 end

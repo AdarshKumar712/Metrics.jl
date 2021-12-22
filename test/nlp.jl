@@ -6,7 +6,8 @@ using DataStructures: OrderedDict
     ref_corpus = [["Example of bleu score"], ["This is an apple"]]
     translated_corpus = ["Example to bleu score", "This no a apple"]
     
-    @test bleu_score(ref_corpus, translated_corpus) == (0.7253666236200925, [0.9444444444444444, 0.7941176470588235, 0.6875, 0.6], 0.9726044771163485, 0.7457981540149954, 36, 37)
+    res = bleu_score(ref_corpus, translated_corpus) .≈ (0.7253666236200925, [0.9444444444444444, 0.7941176470588235, 0.6875, 0.6], 0.9726044771163485, 0.7457981540149954, 36, 37)
+    @test all(res)
     
     hypothesis = ["Example for bleu score", "This cz an apple"]
     ref_corpus = ["Example of bleu score", "This is an apple"]

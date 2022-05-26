@@ -328,17 +328,17 @@ function statsfromTFPN(TP, TN, FP, FN)
 end
 
 """
-    classwise_stats(y_pred, y_true)
+    classwise_stats_fn(y_pred, y_true)
 
 Computes statistics for each of the class for multiclass classification based on provided `y_pred` and `y_true`.
 
 Return the result stats as a dictionary.
 """
-function classwise_stats(y_pred, y_true)
+function classwise_stats_fn(y_pred, y_true)
     _, TP, TN, FP, FN = TFPN(y_pred, y_true)
     ClasswiseStats = Dict() 
     for i in 1:size(y_true, 1)
-        ClasswiseStats[i] = StatsfromTFPN(TP[i], TN[i], FP[i], FN[i])
+        ClasswiseStats[i] = statsfromTFPN(TP[i], TN[i], FP[i], FN[i])
     end
     return ClasswiseStats
 end

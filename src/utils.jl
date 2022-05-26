@@ -35,7 +35,7 @@ function report_stats(y_pred, y_true; classwise_stats=true, avg_type="macro", sa
     print("  False alarm rate: ", g_stats["False_alarm_rate"],"\n")
     print("\n")
     if (classwise_stats == true)
-        c_stats = classwise_stats(y_pred, y_true)
+        c_stats = classwise_stats_fn(y_pred, y_true)
         stats = DataFrame(Class=[], Confusion_Matrix=[], Accuracy=[], Precision=[], Recall=[], F1_score=[], Specificity=[])
         for i in 1: length(c_stats)
             push!(stats, Dict(:Class=>i,c_stats[i]...))

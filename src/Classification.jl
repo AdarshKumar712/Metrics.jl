@@ -1,5 +1,5 @@
 # Classification Metrics and Plots
-# This files contains various metrics used in Classifiaction problems
+# This file contains various metrics used in Classification problems
 
 # One Hot encode
 function onehot_encode(y, labels)
@@ -36,7 +36,7 @@ end
 """
     confusion_matrix(y_pred, y_true)
 
-Function to create a confusion_matrix for classification problems based on provided `y_pred` and `y_true`. Expects `y_true`, to be onehot_enocded already.
+Function to create a confusion matrix for classification problems based on provided `y_pred` and `y_true`. Expects `y_true`, to be `onehot_enocde`d already.
 """
 function confusion_matrix(y_pred, y_true)
     @assert size(y_pred) == size(y_true)
@@ -48,7 +48,7 @@ end
 """
     TFPN(y_pred, y_true)
 
-Returns `Confusion Matrix` and `True Positive`, `True Negative`, `False Positive` and `False Negative` for each class based on `y_pred` and `y_true`. Expects `y_true`, to be onehot_enocded already.  
+Returns `Confusion Matrix` and `True Positive`, `True Negative`, `False Positive` and `False Negative` for each class based on `y_pred` and `y_true`. Expects `y_true`, to be `onehot_enocde`d already.  
 """ 
 function TFPN(y_pred, y_true)
     @assert size(y_pred) == size(y_true)
@@ -88,7 +88,7 @@ end
 """
     sparse_categorical(y_pred, y_true)
 
-Calculated Sparse Categorical Accuracy based on `y_pred` and `y_true`. It evaluates the maximal true value is equal to the index of the maximal predicted value. Here, `y_true` is expected to provide only an integer (start from `0` index) as label for each data element (ie. not one hot encoded). 
+Calculated Sparse Categorical Accuracy based on `y_pred` and `y_true`. It evaluates whether the maximal true value equals the index of the maximal predicted value. Here, `y_true` is expected to provide only an integer (start from `0` index) as a label for each data element (i.e. not one hot encoded). 
 """
 function sparse_categorical(y_pred, y_true)
     @assert size(y_pred, 2) == length(y_true)
@@ -98,7 +98,7 @@ end
 """
     top_k_categorical(y_pred, y_true; k=3)
 
-Evaluates if the index of true value is equal to any of the indices of top k predicted values. Default value of `k` set to `3`. 
+Evaluates if the index of true value is equal to any of the indices of top k predicted values. Default value of `k` is `3`. 
 """
 function top_k_categorical(y_pred, y_true; k=3)
     @assert size(y_pred) == size(y_true)
@@ -120,7 +120,7 @@ end
 """
     top_k_sparse_categorical(y_pred, y_true; k=3)
 
-Evaluates if the true value is equal to any of the indices of top k predicted values. Default value of `k` set to `3`. Similar to `sparse_categorical`, expects the `y_true` to provide only an integer (start from `0` index) as label for each data element (ie. not one hot encoded).
+Evaluates if the true value is equal to any of the indices of top k predicted values. Default value of `k` is `3`. Similar to `sparse_categorical`, expects the `y_true` to provide only an integer (start from `0` index) as label for each data element (ie. not one hot encoded).
 """
 function top_k_sparse_categorical(y_pred, y_true; k=3)
     count = 0
@@ -359,7 +359,8 @@ function global_stats(y_pred, y_true; avg_type="macro")
         specificity = mean(TN ./ (TN .+ FP .+ eps(eltype(TP))))
         accuracy = categorical_accuracy(y_pred, y_true)
         false_alarm_rate = 1 - specificity
-        return Dict("Confusion_Matrix" => confusion_matrix_,
+        return Dict(
+                "Confusion_Matrix" => confusion_matrix_,
                 "Precision" => precision, "Recall" => recall,
                 "Specificity" => specificity, "F1_score" => f1_score,
                 "Accuracy" => accuracy, "False_alarm_rate" => false_alarm_rate)
